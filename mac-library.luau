@@ -6,7 +6,7 @@
     ██║ ╚═╝ ██║██║  ██║╚██████╗    ╚██████╔╝██║
     ╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝     ╚═════╝ ╚═╝
     
-    Mac UI Library - v1.3.0
+    Mac UI Library - v1.5.0
     Acrylic Glass - 透明感のあるUIライブラリ
 ]]
 
@@ -116,11 +116,22 @@ function MacUI:CreateWindow(Config)
         ScreenGui.Parent = Player:WaitForChild("PlayerGui")
     end
     
+    -- 画面サイズ検出
+    local ViewportSize = workspace.CurrentCamera.ViewportSize
+    local ScreenWidth = ViewportSize.X
+    local ScreenHeight = ViewportSize.Y
+    local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+    
+    -- レスポンシブサイズ計算
+    local WindowWidth = math.clamp(ScreenWidth * 0.75, 320, 650)
+    local WindowHeight = math.clamp(ScreenHeight * 0.65, 250, 400)
+    local SidebarWidth = math.clamp(WindowWidth * 0.24, 100, 160)
+    
     -- アクリルブラーレイヤー1 (最背面)
     local AcrylicLayer1 = Instance.new("Frame")
     AcrylicLayer1.Name = "AcrylicLayer1"
-    AcrylicLayer1.Size = UDim2.new(0, 670, 0, 420)
-    AcrylicLayer1.Position = UDim2.new(0.5, -335, 0.5, -210)
+    AcrylicLayer1.Size = UDim2.new(0, WindowWidth + 20, 0, WindowHeight + 20)
+    AcrylicLayer1.Position = UDim2.new(0.5, -(WindowWidth + 20) / 2, 0.5, -(WindowHeight + 20) / 2)
     AcrylicLayer1.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
     AcrylicLayer1.BackgroundTransparency = 0.3
     AcrylicLayer1.BorderSizePixel = 0
@@ -131,8 +142,8 @@ function MacUI:CreateWindow(Config)
     -- アクリルブラーレイヤー2
     local AcrylicLayer2 = Instance.new("Frame")
     AcrylicLayer2.Name = "AcrylicLayer2"
-    AcrylicLayer2.Size = UDim2.new(0, 660, 0, 410)
-    AcrylicLayer2.Position = UDim2.new(0.5, -330, 0.5, -205)
+    AcrylicLayer2.Size = UDim2.new(0, WindowWidth + 10, 0, WindowHeight + 10)
+    AcrylicLayer2.Position = UDim2.new(0.5, -(WindowWidth + 10) / 2, 0.5, -(WindowHeight + 10) / 2)
     AcrylicLayer2.BackgroundColor3 = Color3.fromRGB(25, 28, 35)
     AcrylicLayer2.BackgroundTransparency = 0.5
     AcrylicLayer2.BorderSizePixel = 0
@@ -143,8 +154,8 @@ function MacUI:CreateWindow(Config)
     -- メインウィンドウ
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 650, 0, 400)
-    MainFrame.Position = UDim2.new(0.5, -325, 0.5, -200)
+    MainFrame.Size = UDim2.new(0, WindowWidth, 0, WindowHeight)
+    MainFrame.Position = UDim2.new(0.5, -WindowWidth / 2, 0.5, -WindowHeight / 2)
     MainFrame.BackgroundColor3 = Theme.Background
     MainFrame.BackgroundTransparency = Settings.Transparency
     MainFrame.BorderSizePixel = 0
@@ -154,8 +165,40 @@ function MacUI:CreateWindow(Config)
     GlobalElements.MainFrame = MainFrame
     GlobalElements.AcrylicLayer1 = AcrylicLayer1
     GlobalElements.AcrylicLayer2 = AcrylicLayer2
+    GlobalElements.WindowWidth = WindowWidth
+    GlobalElements.WindowHeight = WindowHeight
+    GlobalElements.SidebarWidth = SidebarWidth
     AddCorner(MainFrame, 14)
     AddStroke(MainFrame, Color3.fromRGB(100, 105, 120), 1, 0.4)
+    
+    -- モバイル用トグルボタン
+    local MobileToggle
+    local UIVisible = true
+    
+    if IsMobile then
+        MobileToggle = Instance.new("TextButton")
+        MobileToggle.Name = "MobileToggle"
+        MobileToggle.Size = UDim2.new(0, 50, 0, 50)
+        MobileToggle.Position = UDim2.new(0, 10, 0, 10)
+        MobileToggle.BackgroundColor3 = Theme.Accent
+        MobileToggle.BackgroundTransparency = 0.3
+        MobileToggle.Text = "MC"
+        MobileToggle.TextColor3 = Theme.Text
+        MobileToggle.TextSize = 16
+        MobileToggle.Font = Enum.Font.GothamBold
+        MobileToggle.ZIndex = 100
+        MobileToggle.Parent = ScreenGui
+        AddCorner(MobileToggle, 12)
+        AddStroke(MobileToggle, Theme.Border, 1, 0.5)
+        
+        MobileToggle.MouseButton1Click:Connect(function()
+            UIVisible = not UIVisible
+            MainFrame.Visible = UIVisible
+            AcrylicLayer1.Visible = UIVisible
+            AcrylicLayer2.Visible = UIVisible
+            Tween(MobileToggle, {BackgroundTransparency = UIVisible and 0.3 or 0.6}, 0.2)
+        end)
+    end
     
     -- アンビエントグロー
     local AmbientGlow = Instance.new("Frame")
@@ -323,7 +366,7 @@ function MacUI:CreateWindow(Config)
     -- サイドバー（ガラス風）
     local Sidebar = Instance.new("Frame")
     Sidebar.Name = "Sidebar"
-    Sidebar.Size = UDim2.new(0, 160, 1, -36)
+    Sidebar.Size = UDim2.new(0, SidebarWidth, 1, -36)
     Sidebar.Position = UDim2.new(0, 0, 0, 36)
     Sidebar.BackgroundColor3 = Theme.Surface
     Sidebar.BackgroundTransparency = 0.5
@@ -348,7 +391,7 @@ function MacUI:CreateWindow(Config)
     -- 区切り線
     local Divider = Instance.new("Frame")
     Divider.Size = UDim2.new(0, 1, 1, -36)
-    Divider.Position = UDim2.new(0, 160, 0, 36)
+    Divider.Position = UDim2.new(0, SidebarWidth, 0, 36)
     Divider.BackgroundColor3 = Theme.Border
     Divider.BackgroundTransparency = 0.7
     Divider.BorderSizePixel = 0
@@ -357,8 +400,8 @@ function MacUI:CreateWindow(Config)
     -- コンテンツエリア
     local ContentArea = Instance.new("Frame")
     ContentArea.Name = "ContentArea"
-    ContentArea.Size = UDim2.new(1, -160, 1, -36)
-    ContentArea.Position = UDim2.new(0, 160, 0, 36)
+    ContentArea.Size = UDim2.new(1, -SidebarWidth, 1, -36)
+    ContentArea.Position = UDim2.new(0, SidebarWidth, 0, 36)
     ContentArea.BackgroundTransparency = 1
     ContentArea.Parent = MainFrame
     
@@ -859,6 +902,7 @@ function MacUI:CreateWindow(Config)
             
             local BarLayout = Instance.new("UIListLayout")
             BarLayout.FillDirection = Enum.FillDirection.Horizontal
+            BarLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
             BarLayout.Padding = UDim.new(0, 6)
             BarLayout.Parent = GraphContainer
             
@@ -896,6 +940,82 @@ function MacUI:CreateWindow(Config)
             end
             
             return GraphObj
+        end
+        
+        -- スクリプト実行
+        function TabInit:CreateExecutor(Title)
+            Title = Title or "Script Executor"
+            
+            local Frame = Instance.new("Frame")
+            Frame.Size = UDim2.new(1, 0, 0, 140)
+            Frame.BackgroundColor3 = Theme.Surface
+            Frame.BackgroundTransparency = 0.4
+            Frame.Parent = TabContent
+            AddCorner(Frame, 10)
+            AddStroke(Frame, Theme.Border, 1, 0.7)
+            
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, -20, 0, 24)
+            Label.Position = UDim2.new(0, 10, 0, 6)
+            Label.BackgroundTransparency = 1
+            Label.Text = Title
+            Label.TextColor3 = Theme.Text
+            Label.TextSize = 13
+            Label.Font = Enum.Font.GothamMedium
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Parent = Frame
+            
+            local InputBox = Instance.new("TextBox")
+            InputBox.Size = UDim2.new(1, -20, 0, 65)
+            InputBox.Position = UDim2.new(0, 10, 0, 32)
+            InputBox.BackgroundColor3 = Theme.Background
+            InputBox.BackgroundTransparency = 0.2
+            InputBox.Text = ""
+            InputBox.PlaceholderText = "print('Hello World')"
+            InputBox.TextColor3 = Theme.Text
+            InputBox.PlaceholderColor3 = Theme.SubText
+            InputBox.TextSize = 12
+            InputBox.Font = Enum.Font.Code
+            InputBox.TextXAlignment = Enum.TextXAlignment.Left
+            InputBox.TextYAlignment = Enum.TextYAlignment.Top
+            InputBox.ClearTextOnFocus = false
+            InputBox.MultiLine = true
+            InputBox.TextWrapped = true
+            InputBox.Parent = Frame
+            AddCorner(InputBox, 6)
+            
+            local ExecButton = Instance.new("TextButton")
+            ExecButton.Size = UDim2.new(1, -20, 0, 30)
+            ExecButton.Position = UDim2.new(0, 10, 0, 102)
+            ExecButton.BackgroundColor3 = Theme.Accent
+            ExecButton.BackgroundTransparency = 0.3
+            ExecButton.Text = "▶ Execute"
+            ExecButton.TextColor3 = Theme.Text
+            ExecButton.TextSize = 13
+            ExecButton.Font = Enum.Font.GothamBold
+            ExecButton.Parent = Frame
+            AddCorner(ExecButton, 6)
+            
+            ExecButton.MouseEnter:Connect(function()
+                Tween(ExecButton, {BackgroundTransparency = 0.1}, 0.15)
+            end)
+            ExecButton.MouseLeave:Connect(function()
+                Tween(ExecButton, {BackgroundTransparency = 0.3}, 0.15)
+            end)
+            
+            ExecButton.MouseButton1Click:Connect(function()
+                local script = InputBox.Text
+                if script and script ~= "" then
+                    local success, err = pcall(function()
+                        loadstring(script)()
+                    end)
+                    if not success then
+                        warn("[Executor Error] " .. tostring(err))
+                    end
+                end
+            end)
+            
+            return Frame
         end
         
         return TabInit
