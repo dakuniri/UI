@@ -6,8 +6,8 @@
     ██║ ╚═╝ ██║██║  ██║╚██████╗    ╚██████╔╝██║
     ╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝     ╚═════╝ ╚═╝
     
-    Mac UI Library - v1.1.0
-    macOSスタイルの透明感のあるUIライブラリ
+    Mac UI Library - v1.2.0
+    Acrylic Glass - 透明感のあるUIライブラリ
 ]]
 
 local MacUI = {}
@@ -38,7 +38,8 @@ local Theme = {
 
 local Settings = {
     AnimSpeed = 0.25,
-    Transparency = 0.15
+    Transparency = 0.45,
+    AcrylicBlur = 0.6
 }
 
 local GlobalElements = {
@@ -115,17 +116,39 @@ function MacUI:CreateWindow(Config)
         ScreenGui.Parent = Player:WaitForChild("PlayerGui")
     end
     
-    -- 背景ブラー風エフェクト
-    local BlurBG = Instance.new("Frame")
-    BlurBG.Name = "BlurBG"
-    BlurBG.Size = UDim2.new(0, 660, 0, 410)
-    BlurBG.Position = UDim2.new(0.5, -330, 0.5, -205)
-    BlurBG.BackgroundColor3 = Theme.Background
-    BlurBG.BackgroundTransparency = 0.5
-    BlurBG.BorderSizePixel = 0
-    BlurBG.ZIndex = 0
-    BlurBG.Parent = ScreenGui
-    AddCorner(BlurBG, 16)
+    -- アクリルブラーレイヤー1 (最背面)
+    local AcrylicLayer1 = Instance.new("Frame")
+    AcrylicLayer1.Name = "AcrylicLayer1"
+    AcrylicLayer1.Size = UDim2.new(0, 670, 0, 420)
+    AcrylicLayer1.Position = UDim2.new(0.5, -335, 0.5, -210)
+    AcrylicLayer1.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+    AcrylicLayer1.BackgroundTransparency = 0.3
+    AcrylicLayer1.BorderSizePixel = 0
+    AcrylicLayer1.ZIndex = 0
+    AcrylicLayer1.Parent = ScreenGui
+    AddCorner(AcrylicLayer1, 18)
+    
+    -- アクリルブラーレイヤー2
+    local AcrylicLayer2 = Instance.new("Frame")
+    AcrylicLayer2.Name = "AcrylicLayer2"
+    AcrylicLayer2.Size = UDim2.new(0, 660, 0, 410)
+    AcrylicLayer2.Position = UDim2.new(0.5, -330, 0.5, -205)
+    AcrylicLayer2.BackgroundColor3 = Color3.fromRGB(25, 28, 35)
+    AcrylicLayer2.BackgroundTransparency = 0.5
+    AcrylicLayer2.BorderSizePixel = 0
+    AcrylicLayer2.ZIndex = 1
+    AcrylicLayer2.Parent = ScreenGui
+    AddCorner(AcrylicLayer2, 16)
+    
+    -- ノイズテクスチャ（アクリル風）
+    local NoiseTexture = Instance.new("ImageLabel")
+    NoiseTexture.Size = UDim2.new(1, 0, 1, 0)
+    NoiseTexture.BackgroundTransparency = 1
+    NoiseTexture.Image = "rbxassetid://8992230677"
+    NoiseTexture.ImageTransparency = 0.97
+    NoiseTexture.ScaleType = Enum.ScaleType.Tile
+    NoiseTexture.TileSize = UDim2.new(0, 128, 0, 128)
+    NoiseTexture.Parent = AcrylicLayer2
     
     -- メインウィンドウ
     local MainFrame = Instance.new("Frame")
@@ -139,9 +162,21 @@ function MacUI:CreateWindow(Config)
     MainFrame.Parent = ScreenGui
     
     GlobalElements.MainFrame = MainFrame
+    GlobalElements.AcrylicLayer1 = AcrylicLayer1
+    GlobalElements.AcrylicLayer2 = AcrylicLayer2
     AddCorner(MainFrame, 14)
-    AddStroke(MainFrame, Theme.Border, 1.5, 0.5)
-    AddGradient(MainFrame)
+    AddStroke(MainFrame, Color3.fromRGB(100, 105, 120), 1, 0.4)
+    
+    -- メインフレームにもノイズ
+    local MainNoise = Instance.new("ImageLabel")
+    MainNoise.Size = UDim2.new(1, 0, 1, 0)
+    MainNoise.BackgroundTransparency = 1
+    MainNoise.Image = "rbxassetid://8992230677"
+    MainNoise.ImageTransparency = 0.96
+    MainNoise.ScaleType = Enum.ScaleType.Tile
+    MainNoise.TileSize = UDim2.new(0, 100, 0, 100)
+    MainNoise.ZIndex = 10
+    MainNoise.Parent = MainFrame
     
     -- アンビエントグロー
     local AmbientGlow = Instance.new("Frame")
@@ -232,11 +267,13 @@ function MacUI:CreateWindow(Config)
     
     local Minimized = false
     local OriginalSize = UDim2.new(0, 650, 0, 400)
-    local OriginalBlurSize = UDim2.new(0, 660, 0, 410)
+    local OriginalAcrylic1Size = UDim2.new(0, 670, 0, 420)
+    local OriginalAcrylic2Size = UDim2.new(0, 660, 0, 410)
     
     -- 閉じるボタン（赤）
     CreateTrafficButton(Theme.Red, UDim2.new(0, 14, 0, 12), function()
-        Tween(BlurBG, {BackgroundTransparency = 1, Size = UDim2.new(0, 0, 0, 0)}, 0.3)
+        Tween(AcrylicLayer1, {BackgroundTransparency = 1, Size = UDim2.new(0, 0, 0, 0)}, 0.3)
+        Tween(AcrylicLayer2, {BackgroundTransparency = 1, Size = UDim2.new(0, 0, 0, 0)}, 0.3)
         Tween(MainFrame, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}, 0.3).Completed:Connect(function()
             ScreenGui:Destroy()
         end)
@@ -247,10 +284,12 @@ function MacUI:CreateWindow(Config)
         Minimized = not Minimized
         if Minimized then
             Tween(MainFrame, {Size = UDim2.new(0, 650, 0, 36)}, 0.25)
-            Tween(BlurBG, {Size = UDim2.new(0, 660, 0, 46)}, 0.25)
+            Tween(AcrylicLayer1, {Size = UDim2.new(0, 670, 0, 56)}, 0.25)
+            Tween(AcrylicLayer2, {Size = UDim2.new(0, 660, 0, 46)}, 0.25)
         else
             Tween(MainFrame, {Size = OriginalSize}, 0.25)
-            Tween(BlurBG, {Size = OriginalBlurSize}, 0.25)
+            Tween(AcrylicLayer1, {Size = OriginalAcrylic1Size}, 0.25)
+            Tween(AcrylicLayer2, {Size = OriginalAcrylic2Size}, 0.25)
         end
     end, Color3.fromRGB(255, 210, 100))
     
@@ -258,10 +297,12 @@ function MacUI:CreateWindow(Config)
     CreateTrafficButton(Theme.Green, UDim2.new(0, 58, 0, 12), function()
         if MainFrame.Size == OriginalSize then
             Tween(MainFrame, {Size = UDim2.new(0, 900, 0, 550), Position = UDim2.new(0.5, -450, 0.5, -275)}, 0.3)
-            Tween(BlurBG, {Size = UDim2.new(0, 910, 0, 560), Position = UDim2.new(0.5, -455, 0.5, -280)}, 0.3)
+            Tween(AcrylicLayer1, {Size = UDim2.new(0, 920, 0, 570), Position = UDim2.new(0.5, -460, 0.5, -285)}, 0.3)
+            Tween(AcrylicLayer2, {Size = UDim2.new(0, 910, 0, 560), Position = UDim2.new(0.5, -455, 0.5, -280)}, 0.3)
         else
             Tween(MainFrame, {Size = OriginalSize, Position = UDim2.new(0.5, -325, 0.5, -200)}, 0.3)
-            Tween(BlurBG, {Size = OriginalBlurSize, Position = UDim2.new(0.5, -330, 0.5, -205)}, 0.3)
+            Tween(AcrylicLayer1, {Size = OriginalAcrylic1Size, Position = UDim2.new(0.5, -335, 0.5, -210)}, 0.3)
+            Tween(AcrylicLayer2, {Size = OriginalAcrylic2Size, Position = UDim2.new(0.5, -330, 0.5, -205)}, 0.3)
         end
     end, Color3.fromRGB(100, 230, 120))
     
@@ -295,7 +336,8 @@ function MacUI:CreateWindow(Config)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
             MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-            BlurBG.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X - 5, startPos.Y.Scale, startPos.Y.Offset + delta.Y - 5)
+            AcrylicLayer1.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X - 10, startPos.Y.Scale, startPos.Y.Offset + delta.Y - 10)
+            AcrylicLayer2.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X - 5, startPos.Y.Scale, startPos.Y.Offset + delta.Y - 5)
         end
     end)
     
