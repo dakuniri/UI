@@ -140,16 +140,6 @@ function MacUI:CreateWindow(Config)
     AcrylicLayer2.Parent = ScreenGui
     AddCorner(AcrylicLayer2, 16)
     
-    -- ノイズテクスチャ（アクリル風）
-    local NoiseTexture = Instance.new("ImageLabel")
-    NoiseTexture.Size = UDim2.new(1, 0, 1, 0)
-    NoiseTexture.BackgroundTransparency = 1
-    NoiseTexture.Image = "rbxassetid://8992230677"
-    NoiseTexture.ImageTransparency = 0.97
-    NoiseTexture.ScaleType = Enum.ScaleType.Tile
-    NoiseTexture.TileSize = UDim2.new(0, 128, 0, 128)
-    NoiseTexture.Parent = AcrylicLayer2
-    
     -- メインウィンドウ
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
@@ -166,17 +156,6 @@ function MacUI:CreateWindow(Config)
     GlobalElements.AcrylicLayer2 = AcrylicLayer2
     AddCorner(MainFrame, 14)
     AddStroke(MainFrame, Color3.fromRGB(100, 105, 120), 1, 0.4)
-    
-    -- メインフレームにもノイズ
-    local MainNoise = Instance.new("ImageLabel")
-    MainNoise.Size = UDim2.new(1, 0, 1, 0)
-    MainNoise.BackgroundTransparency = 1
-    MainNoise.Image = "rbxassetid://8992230677"
-    MainNoise.ImageTransparency = 0.96
-    MainNoise.ScaleType = Enum.ScaleType.Tile
-    MainNoise.TileSize = UDim2.new(0, 100, 0, 100)
-    MainNoise.ZIndex = 10
-    MainNoise.Parent = MainFrame
     
     -- アンビエントグロー
     local AmbientGlow = Instance.new("Frame")
