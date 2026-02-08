@@ -6,7 +6,7 @@
     ██║ ╚═╝ ██║██║  ██║╚██████╗    ╚██████╔╝██║
     ╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝     ╚═════╝ ╚═╝
     
-    Mac UI Library - v1.2.1
+    Mac UI Library - v1.3.0
     Acrylic Glass - 透明感のあるUIライブラリ
 ]]
 
@@ -764,6 +764,138 @@ function MacUI:CreateWindow(Config)
             Section.TextXAlignment = Enum.TextXAlignment.Left
             Section.Parent = TabContent
             return Section
+        end
+        
+        -- 段落（文字サイズ変更可能）
+        function TabInit:CreateParagraph(Text, TextSize)
+            TextSize = TextSize or 12
+            local Paragraph = Instance.new("TextLabel")
+            Paragraph.Size = UDim2.new(1, 0, 0, 0)
+            Paragraph.AutomaticSize = Enum.AutomaticSize.Y
+            Paragraph.BackgroundTransparency = 1
+            Paragraph.Text = Text
+            Paragraph.TextColor3 = Theme.SubText
+            Paragraph.TextSize = TextSize
+            Paragraph.Font = Enum.Font.Gotham
+            Paragraph.TextXAlignment = Enum.TextXAlignment.Left
+            Paragraph.TextWrapped = true
+            Paragraph.Parent = TabContent
+            return Paragraph
+        end
+        
+        -- 数値入力
+        function TabInit:CreateInput(Text, Placeholder, Callback)
+            local Frame = Instance.new("Frame")
+            Frame.Size = UDim2.new(1, 0, 0, 40)
+            Frame.BackgroundColor3 = Theme.Surface
+            Frame.BackgroundTransparency = 0.4
+            Frame.Parent = TabContent
+            AddCorner(Frame, 10)
+            AddStroke(Frame, Theme.Border, 1, 0.7)
+            
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(0.5, 0, 1, 0)
+            Label.Position = UDim2.new(0, 14, 0, 0)
+            Label.BackgroundTransparency = 1
+            Label.Text = Text
+            Label.TextColor3 = Theme.Text
+            Label.TextSize = 13
+            Label.Font = Enum.Font.GothamMedium
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Parent = Frame
+            
+            local InputBox = Instance.new("TextBox")
+            InputBox.Size = UDim2.new(0.45, -14, 0, 28)
+            InputBox.Position = UDim2.new(0.5, 0, 0.5, -14)
+            InputBox.BackgroundColor3 = Theme.Background
+            InputBox.BackgroundTransparency = 0.3
+            InputBox.Text = ""
+            InputBox.PlaceholderText = Placeholder or "入力..."
+            InputBox.TextColor3 = Theme.Text
+            InputBox.PlaceholderColor3 = Theme.SubText
+            InputBox.TextSize = 13
+            InputBox.Font = Enum.Font.Gotham
+            InputBox.ClearTextOnFocus = false
+            InputBox.Parent = Frame
+            AddCorner(InputBox, 6)
+            
+            InputBox.FocusLost:Connect(function(enterPressed)
+                if enterPressed then
+                    pcall(function() Callback(InputBox.Text) end)
+                end
+            end)
+            
+            return Frame
+        end
+        
+        -- グラフ
+        function TabInit:CreateGraph(Title, Data)
+            Data = Data or {0, 0, 0, 0, 0}
+            
+            local Frame = Instance.new("Frame")
+            Frame.Size = UDim2.new(1, 0, 0, 120)
+            Frame.BackgroundColor3 = Theme.Surface
+            Frame.BackgroundTransparency = 0.4
+            Frame.Parent = TabContent
+            AddCorner(Frame, 10)
+            AddStroke(Frame, Theme.Border, 1, 0.7)
+            
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, -20, 0, 24)
+            Label.Position = UDim2.new(0, 10, 0, 6)
+            Label.BackgroundTransparency = 1
+            Label.Text = Title
+            Label.TextColor3 = Theme.Text
+            Label.TextSize = 13
+            Label.Font = Enum.Font.GothamMedium
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Parent = Frame
+            
+            local GraphContainer = Instance.new("Frame")
+            GraphContainer.Size = UDim2.new(1, -20, 0, 70)
+            GraphContainer.Position = UDim2.new(0, 10, 0, 35)
+            GraphContainer.BackgroundTransparency = 1
+            GraphContainer.Parent = Frame
+            
+            local BarLayout = Instance.new("UIListLayout")
+            BarLayout.FillDirection = Enum.FillDirection.Horizontal
+            BarLayout.Padding = UDim.new(0, 6)
+            BarLayout.Parent = GraphContainer
+            
+            local Bars = {}
+            local maxValue = math.max(unpack(Data), 1)
+            
+            for i, value in ipairs(Data) do
+                local BarFrame = Instance.new("Frame")
+                BarFrame.Size = UDim2.new(1 / #Data, -6, 1, 0)
+                BarFrame.BackgroundTransparency = 1
+                BarFrame.Parent = GraphContainer
+                
+                local Bar = Instance.new("Frame")
+                Bar.Size = UDim2.new(1, 0, value / maxValue, 0)
+                Bar.Position = UDim2.new(0, 0, 1 - (value / maxValue), 0)
+                Bar.BackgroundColor3 = Theme.Accent
+                Bar.Parent = BarFrame
+                AddCorner(Bar, 4)
+                
+                Bars[i] = Bar
+            end
+            
+            local GraphObj = {Frame = Frame, Bars = Bars, Data = Data}
+            
+            function GraphObj:Update(NewData)
+                self.Data = NewData
+                local max = math.max(unpack(NewData), 1)
+                for i, bar in ipairs(self.Bars) do
+                    local val = NewData[i] or 0
+                    Tween(bar, {
+                        Size = UDim2.new(1, 0, val / max, 0),
+                        Position = UDim2.new(0, 0, 1 - (val / max), 0)
+                    }, 0.2)
+                end
+            end
+            
+            return GraphObj
         end
         
         return TabInit
