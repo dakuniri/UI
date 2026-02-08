@@ -505,32 +505,38 @@ function MacUI:CreateWindow(Config)
         
         -- ボタン (モダンスタイル)
         function TabInit:CreateButton(Text, Callback)
+            -- 背景フレーム（Stroke用）
+            local Container = Instance.new("Frame")
+            Container.Size = UDim2.new(1, 0, 0, 40)
+            Container.BackgroundColor3 = Theme.Surface
+            Container.BackgroundTransparency = 0.4
+            Container.Parent = TabContent
+            AddCorner(Container, 10)
+            AddStroke(Container, Theme.Border, 1, 0.5)
+            
             local Button = Instance.new("TextButton")
-            Button.Size = UDim2.new(1, 0, 0, 40)
-            Button.BackgroundColor3 = Theme.Surface
-            Button.BackgroundTransparency = 0.4
+            Button.Size = UDim2.new(1, 0, 1, 0)
+            Button.BackgroundTransparency = 1
             Button.Text = Text
             Button.TextColor3 = Theme.Text
             Button.TextSize = 13
             Button.Font = Enum.Font.GothamMedium
-            Button.Parent = TabContent
-            AddCorner(Button, 10)
-            AddStroke(Button, Theme.Border, 1, 0.7)
+            Button.Parent = Container
             
             Button.MouseEnter:Connect(function()
-                Tween(Button, {BackgroundColor3 = Theme.Accent, BackgroundTransparency = 0.3}, 0.2)
+                Tween(Container, {BackgroundColor3 = Theme.Accent, BackgroundTransparency = 0.3}, 0.2)
             end)
             Button.MouseLeave:Connect(function()
-                Tween(Button, {BackgroundColor3 = Theme.Surface, BackgroundTransparency = 0.4}, 0.2)
+                Tween(Container, {BackgroundColor3 = Theme.Surface, BackgroundTransparency = 0.4}, 0.2)
             end)
             Button.MouseButton1Click:Connect(function()
-                Tween(Button, {BackgroundTransparency = 0.1}, 0.1)
+                Tween(Container, {BackgroundTransparency = 0.1}, 0.1)
                 task.wait(0.1)
-                Tween(Button, {BackgroundTransparency = 0.3}, 0.1)
+                Tween(Container, {BackgroundTransparency = 0.3}, 0.1)
                 pcall(Callback)
             end)
             
-            return Button
+            return Container
         end
         
         -- トグル (iOS風)
