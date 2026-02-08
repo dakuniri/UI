@@ -6,7 +6,7 @@
     ██║ ╚═╝ ██║██║  ██║╚██████╗    ╚██████╔╝██║
     ╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝     ╚═════╝ ╚═╝
     
-    Mac UI Library - v1.5.1
+    Mac UI Library - v1.6.0
     Acrylic Glass - 透明感のあるUIライブラリ
 ]]
 
@@ -96,6 +96,57 @@ local function AddGradient(obj, colors)
     gradient.Parent = obj
     return gradient
 end
+
+-- SaveManager
+local SaveManager = {}
+SaveManager.Folder = "MacUI"
+SaveManager.ConfigName = "config"
+
+function SaveManager:SetFolder(folder)
+    self.Folder = folder
+    if not isfolder(folder) then
+        makefolder(folder)
+    end
+end
+
+function SaveManager:GetPath()
+    return self.Folder .. "/" .. self.ConfigName .. ".json"
+end
+
+function SaveManager:Save(data)
+    local success, err = pcall(function()
+        if not isfolder(self.Folder) then
+            makefolder(self.Folder)
+        end
+        local json = game:GetService("HttpService"):JSONEncode(data)
+        writefile(self:GetPath(), json)
+    end)
+    return success, err
+end
+
+function SaveManager:Load()
+    local success, result = pcall(function()
+        if isfile(self:GetPath()) then
+            local json = readfile(self:GetPath())
+            return game:GetService("HttpService"):JSONDecode(json)
+        end
+        return nil
+    end)
+    if success then
+        return result
+    end
+    return nil
+end
+
+function SaveManager:Delete()
+    pcall(function()
+        if isfile(self:GetPath()) then
+            delfile(self:GetPath())
+        end
+    end)
+end
+
+MacUI.SaveManager = SaveManager
 
 -- メイン
 function MacUI:CreateWindow(Config)
