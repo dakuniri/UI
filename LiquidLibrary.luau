@@ -6,7 +6,7 @@
     ███████╗██║╚██████╔╝╚██████╔╝██║██████╔╝    ╚██████╔╝███████╗██║  ██║███████║███████║
     ╚══════╝╚═╝ ╚══▀▀═╝  ╚═════╝ ╚═╝╚═════╝      ╚═════╝ ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝
     
-    Liquid Glass UI Library - v2.1.0
+    Liquid Glass UI Library - v2.2.0
     透明感とリキッドアニメーションを持つ次世代UIライブラリ
 ]]
 
@@ -531,8 +531,33 @@ function LiquidGlass:CreateWindow(Config)
         
         if Minimized then
             Tween(MainFrame, {Size = UDim2.new(0, 550, 0, 50)}, 0.3)
+            -- タブとコンテンツを非表示
+            for _, child in pairs(MainFrame:GetChildren()) do
+                if child.Name == "TabContainer" or child.Name == "ContentContainer" then
+                    Tween(child, {BackgroundTransparency = 1}, 0.2)
+                    for _, subChild in pairs(child:GetDescendants()) do
+                        if subChild:IsA("TextLabel") or subChild:IsA("TextButton") or subChild:IsA("TextBox") then
+                            Tween(subChild, {TextTransparency = 1}, 0.2)
+                        elseif subChild:IsA("Frame") or subChild:IsA("ScrollingFrame") then
+                            Tween(subChild, {BackgroundTransparency = 1}, 0.2)
+                        end
+                    end
+                end
+            end
         else
             Tween(MainFrame, {Size = OriginalSize}, 0.3)
+            -- タブとコンテンツを表示
+            for _, child in pairs(MainFrame:GetChildren()) do
+                if child.Name == "TabContainer" or child.Name == "ContentContainer" then
+                    for _, subChild in pairs(child:GetDescendants()) do
+                        if subChild:IsA("TextLabel") or subChild:IsA("TextButton") or subChild:IsA("TextBox") then
+                            Tween(subChild, {TextTransparency = 0}, 0.2)
+                        elseif subChild:IsA("Frame") then
+                            Tween(subChild, {BackgroundTransparency = subChild.Name == "Indicator" and 0 or 0.85}, 0.2)
+                        end
+                    end
+                end
+            end
         end
     end)
     
