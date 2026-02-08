@@ -6,7 +6,7 @@
     ██║ ╚═╝ ██║██║  ██║╚██████╗    ╚██████╔╝██║
     ╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝     ╚═════╝ ╚═╝
     
-    Mac UI Library - v1.5.0
+    Mac UI Library - v1.5.1
     Acrylic Glass - 透明感のあるUIライブラリ
 ]]
 
@@ -455,6 +455,7 @@ function MacUI:CreateWindow(Config)
         
         local ContentList = Instance.new("UIListLayout")
         ContentList.Padding = UDim.new(0, 10)
+        ContentList.SortOrder = Enum.SortOrder.LayoutOrder
         ContentList.Parent = TabContent
         
         ContentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -502,7 +503,12 @@ function MacUI:CreateWindow(Config)
         table.insert(Tabs, Tab)
         
         local TabInit = {}
+        local ElementIndex = 0
         
+        local function GetNextIndex()
+            ElementIndex = ElementIndex + 1
+            return ElementIndex
+        end        
         -- ボタン (モダンスタイル)
         function TabInit:CreateButton(Text, Callback)
             -- 背景フレーム（Stroke用）
@@ -510,6 +516,7 @@ function MacUI:CreateWindow(Config)
             Container.Size = UDim2.new(1, 0, 0, 40)
             Container.BackgroundColor3 = Theme.Surface
             Container.BackgroundTransparency = 0.4
+            Container.LayoutOrder = GetNextIndex()
             Container.Parent = TabContent
             AddCorner(Container, 10)
             AddStroke(Container, Theme.Border, 1, 0.5)
@@ -545,6 +552,7 @@ function MacUI:CreateWindow(Config)
             Frame.Size = UDim2.new(1, 0, 0, 40)
             Frame.BackgroundColor3 = Theme.Surface
             Frame.BackgroundTransparency = 0.4
+            Frame.LayoutOrder = GetNextIndex()
             Frame.Parent = TabContent
             AddCorner(Frame, 10)
             AddStroke(Frame, Theme.Border, 1, 0.7)
@@ -608,6 +616,7 @@ function MacUI:CreateWindow(Config)
             Frame.Size = UDim2.new(1, 0, 0, 55)
             Frame.BackgroundColor3 = Theme.Surface
             Frame.BackgroundTransparency = 0.4
+            Frame.LayoutOrder = GetNextIndex()
             Frame.Parent = TabContent
             AddCorner(Frame, 10)
             AddStroke(Frame, Theme.Border, 1, 0.7)
@@ -691,6 +700,7 @@ function MacUI:CreateWindow(Config)
             Frame.BackgroundColor3 = Theme.Surface
             Frame.BackgroundTransparency = 0.4
             Frame.ClipsDescendants = true
+            Frame.LayoutOrder = GetNextIndex()
             Frame.Parent = TabContent
             AddCorner(Frame, 10)
             AddStroke(Frame, Theme.Border, 1, 0.7)
@@ -797,6 +807,7 @@ function MacUI:CreateWindow(Config)
             Label.TextSize = 12
             Label.Font = Enum.Font.Gotham
             Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.LayoutOrder = GetNextIndex()
             Label.Parent = TabContent
             return Label
         end
@@ -811,6 +822,7 @@ function MacUI:CreateWindow(Config)
             Section.TextSize = 15
             Section.Font = Enum.Font.GothamBold
             Section.TextXAlignment = Enum.TextXAlignment.Left
+            Section.LayoutOrder = GetNextIndex()
             Section.Parent = TabContent
             return Section
         end
@@ -828,6 +840,7 @@ function MacUI:CreateWindow(Config)
             Paragraph.Font = Enum.Font.Gotham
             Paragraph.TextXAlignment = Enum.TextXAlignment.Left
             Paragraph.TextWrapped = true
+            Paragraph.LayoutOrder = GetNextIndex()
             Paragraph.Parent = TabContent
             return Paragraph
         end
@@ -838,6 +851,7 @@ function MacUI:CreateWindow(Config)
             Frame.Size = UDim2.new(1, 0, 0, 40)
             Frame.BackgroundColor3 = Theme.Surface
             Frame.BackgroundTransparency = 0.4
+            Frame.LayoutOrder = GetNextIndex()
             Frame.Parent = TabContent
             AddCorner(Frame, 10)
             AddStroke(Frame, Theme.Border, 1, 0.7)
@@ -885,6 +899,7 @@ function MacUI:CreateWindow(Config)
             Frame.Size = UDim2.new(1, 0, 0, 120)
             Frame.BackgroundColor3 = Theme.Surface
             Frame.BackgroundTransparency = 0.4
+            Frame.LayoutOrder = GetNextIndex()
             Frame.Parent = TabContent
             AddCorner(Frame, 10)
             AddStroke(Frame, Theme.Border, 1, 0.7)
@@ -956,6 +971,7 @@ function MacUI:CreateWindow(Config)
             Frame.Size = UDim2.new(1, 0, 0, 140)
             Frame.BackgroundColor3 = Theme.Surface
             Frame.BackgroundTransparency = 0.4
+            Frame.LayoutOrder = GetNextIndex()
             Frame.Parent = TabContent
             AddCorner(Frame, 10)
             AddStroke(Frame, Theme.Border, 1, 0.7)
