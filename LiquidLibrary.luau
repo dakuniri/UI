@@ -498,6 +498,44 @@ function LiquidGlass:CreateWindow(Config)
     
     table.insert(GlobalElements.ThemeObjects, {Object = TitleLabel, Type = "Text"})
     
+    -- 最小化ボタン
+    local MinimizeButton = Instance.new("TextButton")
+    MinimizeButton.Size = UDim2.new(0, 40, 0, 40)
+    MinimizeButton.Position = UDim2.new(1, -95, 0, 5)
+    MinimizeButton.BackgroundColor3 = Settings.Colors.Primary
+    MinimizeButton.BackgroundTransparency = 0.9
+    MinimizeButton.Text = "—"
+    MinimizeButton.TextColor3 = Settings.Colors.Text
+    MinimizeButton.TextSize = 18
+    MinimizeButton.Font = Enum.Font.GothamBold
+    MinimizeButton.Parent = TitleBar
+    
+    AddCorner(MinimizeButton, 10)
+    
+    table.insert(GlobalElements.ThemeObjects, {Object = MinimizeButton, Type = "Primary"})
+    
+    local Minimized = false
+    local OriginalSize = UDim2.new(0, 550, 0, 650)
+    
+    MinimizeButton.MouseEnter:Connect(function()
+        Tween(MinimizeButton, {BackgroundTransparency = 0.7, BackgroundColor3 = Color3.fromRGB(255, 200, 50)})
+    end)
+    
+    MinimizeButton.MouseLeave:Connect(function()
+        Tween(MinimizeButton, {BackgroundTransparency = 0.9, BackgroundColor3 = Settings.Colors.Primary})
+    end)
+    
+    MinimizeButton.MouseButton1Click:Connect(function()
+        CreateRipple(MinimizeButton, Vector2.new(20, 20))
+        Minimized = not Minimized
+        
+        if Minimized then
+            Tween(MainFrame, {Size = UDim2.new(0, 550, 0, 50)}, 0.3)
+        else
+            Tween(MainFrame, {Size = OriginalSize}, 0.3)
+        end
+    end)
+    
     -- 閉じるボタン
     local CloseButton = Instance.new("TextButton")
     CloseButton.Size = UDim2.new(0, 40, 0, 40)
