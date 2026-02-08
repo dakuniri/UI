@@ -443,8 +443,8 @@ function MacUI:CreateWindow(Config)
         
         local TabContent = Instance.new("ScrollingFrame")
         TabContent.Name = Name .. "Content"
-        TabContent.Size = UDim2.new(1, -24, 1, -24)
-        TabContent.Position = UDim2.new(0, 12, 0, 12)
+        TabContent.Size = UDim2.new(1, 0, 1, 0)
+        TabContent.Position = UDim2.new(0, 0, 0, 0)
         TabContent.BackgroundTransparency = 1
         TabContent.BorderSizePixel = 0
         TabContent.ScrollBarThickness = 3
@@ -453,13 +453,20 @@ function MacUI:CreateWindow(Config)
         TabContent.Visible = false
         TabContent.Parent = ContentArea
         
+        local ContentPadding = Instance.new("UIPadding")
+        ContentPadding.PaddingTop = UDim.new(0, 12)
+        ContentPadding.PaddingBottom = UDim.new(0, 12)
+        ContentPadding.PaddingLeft = UDim.new(0, 12)
+        ContentPadding.PaddingRight = UDim.new(0, 16)
+        ContentPadding.Parent = TabContent
+        
         local ContentList = Instance.new("UIListLayout")
         ContentList.Padding = UDim.new(0, 10)
         ContentList.SortOrder = Enum.SortOrder.LayoutOrder
         ContentList.Parent = TabContent
         
         ContentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            TabContent.CanvasSize = UDim2.new(0, 0, 0, ContentList.AbsoluteContentSize.Y + 20)
+            TabContent.CanvasSize = UDim2.new(0, 0, 0, ContentList.AbsoluteContentSize.Y + 24)
         end)
         
         local Tab = {Button = TabButton, Content = TabContent, Label = TabLabel, Indicator = Indicator}
