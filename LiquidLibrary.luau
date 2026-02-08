@@ -6,7 +6,7 @@
     ███████╗██║╚██████╔╝╚██████╔╝██║██████╔╝    ╚██████╔╝███████╗██║  ██║███████║███████║
     ╚══════╝╚═╝ ╚══▀▀═╝  ╚═════╝ ╚═╝╚═════╝      ╚═════╝ ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝
     
-    Liquid Glass UI Library - v2.2.0
+    Liquid Glass UI Library - v2.3.0
     透明感とリキッドアニメーションを持つ次世代UIライブラリ
 ]]
 
@@ -448,8 +448,8 @@ function LiquidGlass:CreateWindow(Config)
     -- メインウィンドウ
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 550, 0, 650)
-    MainFrame.Position = UDim2.new(0.5, -275, 0.5, -325)
+    MainFrame.Size = UDim2.new(0, 700, 0, 400)
+    MainFrame.Position = UDim2.new(0.5, -350, 0.5, -200)
     MainFrame.BackgroundColor3 = Settings.Colors.Background
     MainFrame.BackgroundTransparency = Settings.Glass.Transparency
     MainFrame.BorderSizePixel = 0
@@ -515,7 +515,7 @@ function LiquidGlass:CreateWindow(Config)
     table.insert(GlobalElements.ThemeObjects, {Object = MinimizeButton, Type = "Primary"})
     
     local Minimized = false
-    local OriginalSize = UDim2.new(0, 550, 0, 650)
+    local OriginalSize = UDim2.new(0, 700, 0, 400)
     
     MinimizeButton.MouseEnter:Connect(function()
         Tween(MinimizeButton, {BackgroundTransparency = 0.7, BackgroundColor3 = Color3.fromRGB(255, 200, 50)})
@@ -530,7 +530,7 @@ function LiquidGlass:CreateWindow(Config)
         Minimized = not Minimized
         
         if Minimized then
-            Tween(MainFrame, {Size = UDim2.new(0, 550, 0, 50)}, 0.3)
+            Tween(MainFrame, {Size = UDim2.new(0, 700, 0, 50)}, 0.3)
             -- タブとコンテンツを非表示
             for _, child in pairs(MainFrame:GetChildren()) do
                 if child.Name == "TabContainer" or child.Name == "ContentContainer" then
@@ -1151,6 +1151,113 @@ function LiquidGlass:CreateWindow(Config)
             table.insert(GlobalElements.ThemeObjects, {Object = SectionLabel, Type = "Accent", Property = "TextColor3"})
             
             return Section
+        end
+        
+        -- グラフ作成
+        function TabInit:CreateGraph(Name, Data)
+            Data = Data or {0, 0, 0, 0, 0}
+            
+            local GraphFrame = Instance.new("Frame")
+            GraphFrame.Name = Name
+            GraphFrame.Size = UDim2.new(1, -10, 0, 120)
+            GraphFrame.BackgroundColor3 = Settings.Colors.Primary
+            GraphFrame.BackgroundTransparency = 0.85
+            GraphFrame.BorderSizePixel = 0
+            GraphFrame.Parent = TabContent
+            
+            AddCorner(GraphFrame, 12)
+            AddStroke(GraphFrame, Settings.Colors.Primary, 1, 0.7)
+            
+            table.insert(GlobalElements.ThemeObjects, {Object = GraphFrame, Type = "Primary"})
+            
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, 0, 0, 25)
+            Label.Position = UDim2.new(0, 10, 0, 5)
+            Label.BackgroundTransparency = 1
+            Label.Text = Name
+            Label.TextColor3 = Settings.Colors.Text
+            Label.TextSize = 14
+            Label.Font = Enum.Font.GothamMedium
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Parent = GraphFrame
+            
+            table.insert(GlobalElements.ThemeObjects, {Object = Label, Type = "Text"})
+            
+            local GraphArea = Instance.new("Frame")
+            GraphArea.Size = UDim2.new(1, -20, 0, 80)
+            GraphArea.Position = UDim2.new(0, 10, 0, 30)
+            GraphArea.BackgroundTransparency = 1
+            GraphArea.Parent = GraphFrame
+            
+            local Bars = {}
+            local maxVal = math.max(unpack(Data))
+            if maxVal == 0 then maxVal = 1 end
+            
+            for i, value in ipairs(Data) do
+                local Bar = Instance.new("Frame")
+                Bar.Size = UDim2.new(1/#Data - 0.02, 0, value/maxVal, 0)
+                Bar.Position = UDim2.new((i-1)/#Data, 2, 1 - value/maxVal, 0)
+                Bar.BackgroundColor3 = Settings.Colors.Accent
+                Bar.BorderSizePixel = 0
+                Bar.Parent = GraphArea
+                
+                AddCorner(Bar, 4)
+                table.insert(GlobalElements.ThemeObjects, {Object = Bar, Type = "Accent"})
+                table.insert(Bars, Bar)
+            end
+            
+            local GraphObj = {Frame = GraphFrame, Bars = Bars}
+            
+            function GraphObj:Update(NewData)
+                local newMax = math.max(unpack(NewData))
+                if newMax == 0 then newMax = 1 end
+                
+                for i, bar in ipairs(Bars) do
+                    if NewData[i] then
+                        local val = NewData[i]
+                        Tween(bar, {
+                            Size = UDim2.new(1/#NewData - 0.02, 0, val/newMax, 0),
+                            Position = UDim2.new((i-1)/#NewData, 2, 1 - val/newMax, 0)
+                        }, 0.3)
+                    end
+                end
+            end
+            
+            return GraphObj
+        end
+        
+        -- カスタムテキスト作成（サイズ指定可能）
+        function TabInit:CreateParagraph(Text, TextSize)
+            TextSize = TextSize or 14
+            
+            local Paragraph = Instance.new("TextLabel")
+            Paragraph.Size = UDim2.new(1, -10, 0, 0)
+            Paragraph.BackgroundColor3 = Settings.Colors.Primary
+            Paragraph.BackgroundTransparency = 0.85
+            Paragraph.Text = Text
+            Paragraph.TextColor3 = Settings.Colors.Text
+            Paragraph.TextSize = TextSize
+            Paragraph.Font = Enum.Font.Gotham
+            Paragraph.TextXAlignment = Enum.TextXAlignment.Left
+            Paragraph.TextYAlignment = Enum.TextYAlignment.Top
+            Paragraph.TextWrapped = true
+            Paragraph.AutomaticSize = Enum.AutomaticSize.Y
+            Paragraph.Parent = TabContent
+            
+            AddCorner(Paragraph, 12)
+            AddStroke(Paragraph, Settings.Colors.Primary, 1, 0.7)
+            
+            local Padding = Instance.new("UIPadding")
+            Padding.PaddingTop = UDim.new(0, 10)
+            Padding.PaddingBottom = UDim.new(0, 10)
+            Padding.PaddingLeft = UDim.new(0, 12)
+            Padding.PaddingRight = UDim.new(0, 12)
+            Padding.Parent = Paragraph
+            
+            table.insert(GlobalElements.ThemeObjects, {Object = Paragraph, Type = "Primary"})
+            table.insert(GlobalElements.ThemeObjects, {Object = Paragraph, Type = "Text", Property = "TextColor3"})
+            
+            return Paragraph
         end
         
         return TabInit
