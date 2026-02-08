@@ -1,7 +1,6 @@
 --[[
     LiquidLibrary - Roblox UI Library
-    Liquid Glass Design | INS key to toggle
-    © 2026
+    Monochrome Glass Design | INS key to toggle
 ]]
 
 local LiquidLibrary = {}
@@ -13,14 +12,15 @@ local RunService = game:GetService("RunService")
 local Player = Players.LocalPlayer
 local Mouse = Player:GetMouse()
 
--- Config
+-- Config (Black & White Theme)
 local Config = {
-    MainColor = Color3.fromRGB(20, 20, 35),
-    AccentColor = Color3.fromRGB(100, 150, 255),
-    GlassColor = Color3.fromRGB(40, 40, 60),
+    MainColor = Color3.fromRGB(15, 15, 15),
+    AccentColor = Color3.fromRGB(255, 255, 255),
+    GlassColor = Color3.fromRGB(25, 25, 25),
     TextColor = Color3.fromRGB(255, 255, 255),
+    DimText = Color3.fromRGB(150, 150, 150),
     ToggleKey = Enum.KeyCode.Insert,
-    AnimationSpeed = 0.3
+    AnimationSpeed = 0.25
 }
 
 -- Utility
@@ -33,8 +33,8 @@ local function Create(class, props)
     return inst
 end
 
-local function Tween(obj, props, time)
-    local tween = TweenService:Create(obj, TweenInfo.new(time or Config.AnimationSpeed, Enum.EasingStyle.Quart), props)
+local function Tween(obj, props, time, style, dir)
+    local tween = TweenService:Create(obj, TweenInfo.new(time or Config.AnimationSpeed, style or Enum.EasingStyle.Quint, dir or Enum.EasingDirection.Out), props)
     tween:Play()
     return tween
 end
@@ -43,36 +43,34 @@ local function AddCorner(parent, radius)
     return Create("UICorner", {CornerRadius = UDim.new(0, radius or 8), Parent = parent})
 end
 
-local function AddGlass(parent)
+local function AddGlass(parent, transparency)
     local blur = Create("Frame", {
         Name = "Glass",
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundColor3 = Config.GlassColor,
-        BackgroundTransparency = 0.3,
+        BackgroundTransparency = transparency or 0.15,
         BorderSizePixel = 0,
+        ZIndex = 0,
         Parent = parent
     })
     AddCorner(blur, 10)
     
-    local gradient = Create("UIGradient", {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 180, 200))
-        }),
-        Rotation = 45,
-        Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 0.7),
-            NumberSequenceKeypoint.new(0.5, 0.85),
-            NumberSequenceKeypoint.new(1, 0.7)
-        }),
-        Parent = blur
-    })
-    
     local stroke = Create("UIStroke", {
         Color = Color3.fromRGB(255, 255, 255),
-        Transparency = 0.8,
-        Thickness = 1.5,
+        Transparency = 0.85,
+        Thickness = 1,
         Parent = parent
+    })
+    
+    -- Subtle inner glow
+    local innerGlow = Create("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 60, 60)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(30, 30, 30)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 20))
+        }),
+        Rotation = 90,
+        Parent = blur
     })
     
     return blur
@@ -104,8 +102,18 @@ local function MakeDraggable(frame, handle)
     UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
-            Tween(frame, {Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)}, 0.05)
+            Tween(frame, {Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)}, 0.08)
         end
+    end)
+end
+
+-- Hover animation helper
+local function AddHover(element, hoverProps, normalProps)
+    element.MouseEnter:Connect(function()
+        Tween(element, hoverProps, 0.15)
+    end)
+    element.MouseLeave:Connect(function()
+        Tween(element, normalProps, 0.15)
     end)
 end
 
@@ -120,95 +128,122 @@ function LiquidLibrary:CreateWindow(title)
     
     local MainFrame = Create("Frame", {
         Name = "Main",
-        Size = UDim2.new(0, 500, 0, 350),
-        Position = UDim2.new(0.5, -250, 0.5, -175),
+        Size = UDim2.new(0, 0, 0, 0),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = Config.MainColor,
+        BackgroundTransparency = 0.05,
         BorderSizePixel = 0,
+        ClipsDescendants = true,
         Parent = ScreenGui
     })
     AddCorner(MainFrame, 12)
-    AddGlass(MainFrame)
+    AddGlass(MainFrame, 0.1)
+    
+    -- Opening animation
+    Tween(MainFrame, {Size = UDim2.new(0, 520, 0, 380)}, 0.4, Enum.EasingStyle.Back)
     
     local TopBar = Create("Frame", {
         Name = "TopBar",
-        Size = UDim2.new(1, 0, 0, 40),
+        Size = UDim2.new(1, 0, 0, 45),
         BackgroundTransparency = 1,
+        ZIndex = 2,
         Parent = MainFrame
     })
     
     local Title = Create("TextLabel", {
         Name = "Title",
         Size = UDim2.new(1, -100, 1, 0),
-        Position = UDim2.new(0, 15, 0, 0),
+        Position = UDim2.new(0, 18, 0, 0),
         BackgroundTransparency = 1,
         Text = title or "Liquid Library",
         TextColor3 = Config.TextColor,
-        TextSize = 18,
+        TextSize = 16,
         Font = Enum.Font.GothamBold,
         TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 2,
         Parent = TopBar
     })
     
     -- Minimize Button
     local MinBtn = Create("TextButton", {
         Name = "Minimize",
-        Size = UDim2.new(0, 30, 0, 30),
-        Position = UDim2.new(1, -70, 0, 5),
-        BackgroundColor3 = Color3.fromRGB(255, 200, 50),
+        Size = UDim2.new(0, 28, 0, 28),
+        Position = UDim2.new(1, -68, 0, 8),
+        BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+        BackgroundTransparency = 0.3,
         Text = "-",
-        TextColor3 = Color3.fromRGB(0, 0, 0),
-        TextSize = 20,
+        TextColor3 = Config.TextColor,
+        TextSize = 18,
         Font = Enum.Font.GothamBold,
+        ZIndex = 2,
         Parent = TopBar
     })
     AddCorner(MinBtn, 6)
+    AddHover(MinBtn, {BackgroundTransparency = 0}, {BackgroundTransparency = 0.3})
     
     -- Close Button
     local CloseBtn = Create("TextButton", {
         Name = "Close",
-        Size = UDim2.new(0, 30, 0, 30),
-        Position = UDim2.new(1, -35, 0, 5),
-        BackgroundColor3 = Color3.fromRGB(255, 80, 80),
-        Text = "×",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 18,
+        Size = UDim2.new(0, 28, 0, 28),
+        Position = UDim2.new(1, -35, 0, 8),
+        BackgroundColor3 = Color3.fromRGB(80, 80, 80),
+        BackgroundTransparency = 0.3,
+        Text = "x",
+        TextColor3 = Config.TextColor,
+        TextSize = 14,
         Font = Enum.Font.GothamBold,
+        ZIndex = 2,
         Parent = TopBar
     })
     AddCorner(CloseBtn, 6)
+    AddHover(CloseBtn, {BackgroundTransparency = 0, BackgroundColor3 = Color3.fromRGB(200, 60, 60)}, {BackgroundTransparency = 0.3, BackgroundColor3 = Color3.fromRGB(80, 80, 80)})
+    
+    -- Separator line
+    local Separator = Create("Frame", {
+        Size = UDim2.new(1, -20, 0, 1),
+        Position = UDim2.new(0, 10, 0, 44),
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 0.9,
+        BorderSizePixel = 0,
+        ZIndex = 2,
+        Parent = MainFrame
+    })
     
     MakeDraggable(MainFrame, TopBar)
     
     -- Tab Container
     local TabHolder = Create("Frame", {
         Name = "TabHolder",
-        Size = UDim2.new(0, 120, 1, -50),
-        Position = UDim2.new(0, 10, 0, 45),
-        BackgroundColor3 = Config.GlassColor,
+        Size = UDim2.new(0, 130, 1, -60),
+        Position = UDim2.new(0, 10, 0, 52),
+        BackgroundColor3 = Color3.fromRGB(20, 20, 20),
         BackgroundTransparency = 0.5,
+        ZIndex = 2,
         Parent = MainFrame
     })
     AddCorner(TabHolder, 8)
     
     local TabList = Create("UIListLayout", {
-        Padding = UDim.new(0, 5),
+        Padding = UDim.new(0, 4),
         Parent = TabHolder
     })
     
     local TabPadding = Create("UIPadding", {
-        PaddingTop = UDim.new(0, 5),
-        PaddingLeft = UDim.new(0, 5),
-        PaddingRight = UDim.new(0, 5),
+        PaddingTop = UDim.new(0, 6),
+        PaddingLeft = UDim.new(0, 6),
+        PaddingRight = UDim.new(0, 6),
         Parent = TabHolder
     })
     
     -- Content Area
     local ContentArea = Create("Frame", {
         Name = "Content",
-        Size = UDim2.new(1, -150, 1, -55),
-        Position = UDim2.new(0, 140, 0, 45),
+        Size = UDim2.new(1, -160, 1, -62),
+        Position = UDim2.new(0, 150, 0, 52),
         BackgroundTransparency = 1,
         ClipsDescendants = true,
+        ZIndex = 2,
         Parent = MainFrame
     })
     
@@ -221,32 +256,33 @@ function LiquidLibrary:CreateWindow(title)
         Minimized = false
     }
     
-    -- Toggle visibility
+    -- Toggle visibility with animation
     local function ToggleWindow()
         Window.Visible = not Window.Visible
         if Window.Visible then
             MainFrame.Visible = true
-            Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 350)}, 0.2)
+            MainFrame.Size = UDim2.new(0, 0, 0, 0)
+            Tween(MainFrame, {Size = UDim2.new(0, 520, 0, 380)}, 0.3, Enum.EasingStyle.Back)
         else
-            Tween(MainFrame, {Size = UDim2.new(0, 0, 0, 0)}, 0.2).Completed:Wait()
+            Tween(MainFrame, {Size = UDim2.new(0, 0, 0, 0)}, 0.25, Enum.EasingStyle.Quint).Completed:Wait()
             MainFrame.Visible = false
         end
     end
     
-    -- Minimize
-    local originalSize = UDim2.new(0, 500, 0, 350)
+    -- Minimize with animation
+    local originalSize = UDim2.new(0, 520, 0, 380)
     MinBtn.MouseButton1Click:Connect(function()
         Window.Minimized = not Window.Minimized
         if Window.Minimized then
-            Tween(MainFrame, {Size = UDim2.new(0, 500, 0, 40)}, 0.2)
+            Tween(MainFrame, {Size = UDim2.new(0, 520, 0, 45)}, 0.25, Enum.EasingStyle.Quint)
         else
-            Tween(MainFrame, {Size = originalSize}, 0.2)
+            Tween(MainFrame, {Size = originalSize}, 0.25, Enum.EasingStyle.Quint)
         end
     end)
     
-    -- Close
+    -- Close with animation
     CloseBtn.MouseButton1Click:Connect(function()
-        Tween(MainFrame, {Size = UDim2.new(0, 0, 0, 0)}, 0.2).Completed:Wait()
+        Tween(MainFrame, {Size = UDim2.new(0, 0, 0, 0)}, 0.25, Enum.EasingStyle.Quint).Completed:Wait()
         ScreenGui:Destroy()
     end)
     
@@ -258,16 +294,17 @@ function LiquidLibrary:CreateWindow(title)
     end)
     
     -- Create Tab
-    function Window:CreateTab(name, icon)
+    function Window:CreateTab(name)
         local TabBtn = Create("TextButton", {
             Name = name,
             Size = UDim2.new(1, 0, 0, 32),
-            BackgroundColor3 = Config.GlassColor,
-            BackgroundTransparency = 0.5,
-            Text = (icon or "📁") .. " " .. name,
-            TextColor3 = Config.TextColor,
-            TextSize = 14,
-            Font = Enum.Font.Gotham,
+            BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+            BackgroundTransparency = 0.6,
+            Text = name,
+            TextColor3 = Config.DimText,
+            TextSize = 13,
+            Font = Enum.Font.GothamMedium,
+            ZIndex = 3,
             Parent = TabHolder
         })
         AddCorner(TabBtn, 6)
@@ -276,21 +313,22 @@ function LiquidLibrary:CreateWindow(title)
             Name = name .. "Content",
             Size = UDim2.new(1, 0, 1, 0),
             BackgroundTransparency = 1,
-            ScrollBarThickness = 3,
-            ScrollBarImageColor3 = Config.AccentColor,
+            ScrollBarThickness = 2,
+            ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100),
+            ScrollBarImageTransparency = 0.5,
             Visible = false,
+            ZIndex = 3,
             Parent = ContentArea
         })
         
         local ContentList = Create("UIListLayout", {
-            Padding = UDim.new(0, 8),
+            Padding = UDim.new(0, 6),
             Parent = TabContent
         })
         
         local ContentPadding = Create("UIPadding", {
-            PaddingTop = UDim.new(0, 5),
-            PaddingLeft = UDim.new(0, 5),
-            PaddingRight = UDim.new(0, 5),
+            PaddingTop = UDim.new(0, 4),
+            PaddingRight = UDim.new(0, 8),
             Parent = TabContent
         })
         
@@ -306,17 +344,30 @@ function LiquidLibrary:CreateWindow(title)
         TabBtn.MouseButton1Click:Connect(function()
             for _, t in pairs(Window.Tabs) do
                 t.Content.Visible = false
-                Tween(t.Button, {BackgroundTransparency = 0.5}, 0.1)
+                Tween(t.Button, {BackgroundTransparency = 0.6, TextColor3 = Config.DimText}, 0.15)
             end
             TabContent.Visible = true
-            Tween(TabBtn, {BackgroundTransparency = 0.2}, 0.1)
+            Tween(TabBtn, {BackgroundTransparency = 0.2, TextColor3 = Config.TextColor}, 0.15)
             Window.CurrentTab = Tab
+        end)
+        
+        -- Hover effect
+        TabBtn.MouseEnter:Connect(function()
+            if Window.CurrentTab ~= Tab then
+                Tween(TabBtn, {BackgroundTransparency = 0.4}, 0.1)
+            end
+        end)
+        TabBtn.MouseLeave:Connect(function()
+            if Window.CurrentTab ~= Tab then
+                Tween(TabBtn, {BackgroundTransparency = 0.6}, 0.1)
+            end
         end)
         
         -- Select first tab
         if #Window.Tabs == 0 then
             TabContent.Visible = true
             TabBtn.BackgroundTransparency = 0.2
+            TabBtn.TextColor3 = Config.TextColor
             Window.CurrentTab = Tab
         end
         
@@ -325,23 +376,38 @@ function LiquidLibrary:CreateWindow(title)
         -- UI Elements
         function Tab:CreateButton(text, callback)
             local Btn = Create("TextButton", {
-                Size = UDim2.new(1, -10, 0, 35),
-                BackgroundColor3 = Config.AccentColor,
+                Size = UDim2.new(1, 0, 0, 34),
+                BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+                BackgroundTransparency = 0.4,
                 Text = text,
                 TextColor3 = Config.TextColor,
-                TextSize = 14,
+                TextSize = 13,
                 Font = Enum.Font.GothamMedium,
+                ZIndex = 4,
                 Parent = TabContent
             })
             AddCorner(Btn, 6)
             
+            local stroke = Create("UIStroke", {
+                Color = Color3.fromRGB(255, 255, 255),
+                Transparency = 0.92,
+                Thickness = 1,
+                Parent = Btn
+            })
+            
             Btn.MouseEnter:Connect(function()
-                Tween(Btn, {BackgroundColor3 = Config.AccentColor:Lerp(Color3.new(1,1,1), 0.2)}, 0.1)
+                Tween(Btn, {BackgroundTransparency = 0.2, BackgroundColor3 = Color3.fromRGB(70, 70, 70)}, 0.15)
+                Tween(stroke, {Transparency = 0.8}, 0.15)
             end)
             Btn.MouseLeave:Connect(function()
-                Tween(Btn, {BackgroundColor3 = Config.AccentColor}, 0.1)
+                Tween(Btn, {BackgroundTransparency = 0.4, BackgroundColor3 = Color3.fromRGB(50, 50, 50)}, 0.15)
+                Tween(stroke, {Transparency = 0.92}, 0.15)
             end)
             Btn.MouseButton1Click:Connect(function()
+                -- Click animation
+                Tween(Btn, {Size = UDim2.new(1, -4, 0, 32)}, 0.08)
+                task.wait(0.08)
+                Tween(Btn, {Size = UDim2.new(1, 0, 0, 34)}, 0.08)
                 if callback then callback() end
             end)
             return Btn
@@ -349,50 +415,54 @@ function LiquidLibrary:CreateWindow(title)
         
         function Tab:CreateToggle(text, default, callback)
             local ToggleFrame = Create("Frame", {
-                Size = UDim2.new(1, -10, 0, 35),
-                BackgroundColor3 = Config.GlassColor,
-                BackgroundTransparency = 0.3,
+                Size = UDim2.new(1, 0, 0, 34),
+                BackgroundColor3 = Color3.fromRGB(35, 35, 35),
+                BackgroundTransparency = 0.4,
+                ZIndex = 4,
                 Parent = TabContent
             })
             AddCorner(ToggleFrame, 6)
             
             local Label = Create("TextLabel", {
                 Size = UDim2.new(1, -60, 1, 0),
-                Position = UDim2.new(0, 10, 0, 0),
+                Position = UDim2.new(0, 12, 0, 0),
                 BackgroundTransparency = 1,
                 Text = text,
                 TextColor3 = Config.TextColor,
-                TextSize = 14,
+                TextSize = 13,
                 Font = Enum.Font.Gotham,
                 TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 4,
                 Parent = ToggleFrame
             })
             
             local ToggleBtn = Create("Frame", {
-                Size = UDim2.new(0, 44, 0, 22),
-                Position = UDim2.new(1, -50, 0.5, -11),
-                BackgroundColor3 = Color3.fromRGB(60, 60, 80),
+                Size = UDim2.new(0, 40, 0, 20),
+                Position = UDim2.new(1, -50, 0.5, -10),
+                BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+                ZIndex = 4,
                 Parent = ToggleFrame
             })
-            AddCorner(ToggleBtn, 11)
+            AddCorner(ToggleBtn, 10)
             
             local Circle = Create("Frame", {
-                Size = UDim2.new(0, 18, 0, 18),
-                Position = UDim2.new(0, 2, 0.5, -9),
-                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                Size = UDim2.new(0, 16, 0, 16),
+                Position = UDim2.new(0, 2, 0.5, -8),
+                BackgroundColor3 = Color3.fromRGB(150, 150, 150),
+                ZIndex = 5,
                 Parent = ToggleBtn
             })
-            AddCorner(Circle, 9)
+            AddCorner(Circle, 8)
             
             local Toggled = default or false
             
             local function Update()
                 if Toggled then
-                    Tween(ToggleBtn, {BackgroundColor3 = Config.AccentColor}, 0.2)
-                    Tween(Circle, {Position = UDim2.new(1, -20, 0.5, -9)}, 0.2)
+                    Tween(ToggleBtn, {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}, 0.2)
+                    Tween(Circle, {Position = UDim2.new(1, -18, 0.5, -8), BackgroundColor3 = Color3.fromRGB(20, 20, 20)}, 0.2)
                 else
-                    Tween(ToggleBtn, {BackgroundColor3 = Color3.fromRGB(60, 60, 80)}, 0.2)
-                    Tween(Circle, {Position = UDim2.new(0, 2, 0.5, -9)}, 0.2)
+                    Tween(ToggleBtn, {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}, 0.2)
+                    Tween(Circle, {Position = UDim2.new(0, 2, 0.5, -8), BackgroundColor3 = Color3.fromRGB(150, 150, 150)}, 0.2)
                 end
                 if callback then callback(Toggled) end
             end
@@ -406,55 +476,70 @@ function LiquidLibrary:CreateWindow(title)
                 end
             end)
             
-            return {Frame = ToggleFrame, SetValue = function(v) Toggled = v; Update() end}
+            return {Frame = ToggleFrame, SetValue = function(v) Toggled = v; Update() end, GetValue = function() return Toggled end}
         end
         
         function Tab:CreateSlider(text, min, max, default, callback)
             local SliderFrame = Create("Frame", {
-                Size = UDim2.new(1, -10, 0, 50),
-                BackgroundColor3 = Config.GlassColor,
-                BackgroundTransparency = 0.3,
+                Size = UDim2.new(1, 0, 0, 48),
+                BackgroundColor3 = Color3.fromRGB(35, 35, 35),
+                BackgroundTransparency = 0.4,
+                ZIndex = 4,
                 Parent = TabContent
             })
             AddCorner(SliderFrame, 6)
             
             local Label = Create("TextLabel", {
-                Size = UDim2.new(1, -60, 0, 20),
-                Position = UDim2.new(0, 10, 0, 5),
+                Size = UDim2.new(1, -55, 0, 20),
+                Position = UDim2.new(0, 12, 0, 4),
                 BackgroundTransparency = 1,
                 Text = text,
                 TextColor3 = Config.TextColor,
-                TextSize = 14,
+                TextSize = 13,
                 Font = Enum.Font.Gotham,
                 TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 4,
                 Parent = SliderFrame
             })
             
             local ValueLabel = Create("TextLabel", {
-                Size = UDim2.new(0, 50, 0, 20),
-                Position = UDim2.new(1, -55, 0, 5),
+                Size = UDim2.new(0, 45, 0, 20),
+                Position = UDim2.new(1, -52, 0, 4),
                 BackgroundTransparency = 1,
                 Text = tostring(default or min),
-                TextColor3 = Config.AccentColor,
-                TextSize = 14,
-                Font = Enum.Font.GothamBold,
+                TextColor3 = Config.DimText,
+                TextSize = 13,
+                Font = Enum.Font.GothamMedium,
+                TextXAlignment = Enum.TextXAlignment.Right,
+                ZIndex = 4,
                 Parent = SliderFrame
             })
             
             local SliderBG = Create("Frame", {
-                Size = UDim2.new(1, -20, 0, 8),
-                Position = UDim2.new(0, 10, 0, 32),
-                BackgroundColor3 = Color3.fromRGB(40, 40, 60),
+                Size = UDim2.new(1, -24, 0, 6),
+                Position = UDim2.new(0, 12, 0, 32),
+                BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+                ZIndex = 4,
                 Parent = SliderFrame
             })
-            AddCorner(SliderBG, 4)
+            AddCorner(SliderBG, 3)
             
             local SliderFill = Create("Frame", {
                 Size = UDim2.new((default - min) / (max - min), 0, 1, 0),
-                BackgroundColor3 = Config.AccentColor,
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                ZIndex = 5,
                 Parent = SliderBG
             })
-            AddCorner(SliderFill, 4)
+            AddCorner(SliderFill, 3)
+            
+            local SliderKnob = Create("Frame", {
+                Size = UDim2.new(0, 12, 0, 12),
+                Position = UDim2.new((default - min) / (max - min), -6, 0.5, -6),
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                ZIndex = 6,
+                Parent = SliderBG
+            })
+            AddCorner(SliderKnob, 6)
             
             local Value = default or min
             local Dragging = false
@@ -476,7 +561,8 @@ function LiquidLibrary:CreateWindow(title)
                     local pos = (Mouse.X - SliderBG.AbsolutePosition.X) / SliderBG.AbsoluteSize.X
                     pos = math.clamp(pos, 0, 1)
                     Value = math.floor(min + (max - min) * pos)
-                    SliderFill.Size = UDim2.new(pos, 0, 1, 0)
+                    Tween(SliderFill, {Size = UDim2.new(pos, 0, 1, 0)}, 0.05)
+                    Tween(SliderKnob, {Position = UDim2.new(pos, -6, 0.5, -6)}, 0.05)
                     ValueLabel.Text = tostring(Value)
                     if callback then callback(Value) end
                 end
@@ -487,21 +573,34 @@ function LiquidLibrary:CreateWindow(title)
         
         function Tab:CreateTextbox(placeholder, callback)
             local Textbox = Create("TextBox", {
-                Size = UDim2.new(1, -10, 0, 35),
-                BackgroundColor3 = Config.GlassColor,
+                Size = UDim2.new(1, 0, 0, 34),
+                BackgroundColor3 = Color3.fromRGB(30, 30, 30),
                 BackgroundTransparency = 0.3,
                 Text = "",
                 PlaceholderText = placeholder or "Enter text...",
                 TextColor3 = Config.TextColor,
-                PlaceholderColor3 = Color3.fromRGB(150, 150, 170),
-                TextSize = 14,
+                PlaceholderColor3 = Config.DimText,
+                TextSize = 13,
                 Font = Enum.Font.Gotham,
                 ClearTextOnFocus = false,
+                ZIndex = 4,
                 Parent = TabContent
             })
             AddCorner(Textbox, 6)
             
+            local stroke = Create("UIStroke", {
+                Color = Color3.fromRGB(255, 255, 255),
+                Transparency = 0.92,
+                Thickness = 1,
+                Parent = Textbox
+            })
+            
+            Textbox.Focused:Connect(function()
+                Tween(stroke, {Transparency = 0.7}, 0.15)
+            end)
+            
             Textbox.FocusLost:Connect(function(enter)
+                Tween(stroke, {Transparency = 0.92}, 0.15)
                 if enter and callback then callback(Textbox.Text) end
             end)
             
@@ -510,34 +609,37 @@ function LiquidLibrary:CreateWindow(title)
         
         function Tab:CreateDropdown(text, options, callback)
             local DropFrame = Create("Frame", {
-                Size = UDim2.new(1, -10, 0, 35),
-                BackgroundColor3 = Config.GlassColor,
-                BackgroundTransparency = 0.3,
+                Size = UDim2.new(1, 0, 0, 34),
+                BackgroundColor3 = Color3.fromRGB(35, 35, 35),
+                BackgroundTransparency = 0.4,
                 ClipsDescendants = true,
+                ZIndex = 4,
                 Parent = TabContent
             })
             AddCorner(DropFrame, 6)
             
             local Label = Create("TextLabel", {
-                Size = UDim2.new(1, -30, 0, 35),
-                Position = UDim2.new(0, 10, 0, 0),
+                Size = UDim2.new(1, -30, 0, 34),
+                Position = UDim2.new(0, 12, 0, 0),
                 BackgroundTransparency = 1,
                 Text = text,
                 TextColor3 = Config.TextColor,
-                TextSize = 14,
+                TextSize = 13,
                 Font = Enum.Font.Gotham,
                 TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 4,
                 Parent = DropFrame
             })
             
             local Arrow = Create("TextLabel", {
-                Size = UDim2.new(0, 20, 0, 35),
+                Size = UDim2.new(0, 20, 0, 34),
                 Position = UDim2.new(1, -25, 0, 0),
                 BackgroundTransparency = 1,
-                Text = "▼",
-                TextColor3 = Config.TextColor,
+                Text = "v",
+                TextColor3 = Config.DimText,
                 TextSize = 12,
-                Font = Enum.Font.Gotham,
+                Font = Enum.Font.GothamBold,
+                ZIndex = 4,
                 Parent = DropFrame
             })
             
@@ -545,46 +647,55 @@ function LiquidLibrary:CreateWindow(title)
             local Selected = nil
             
             local OptionContainer = Create("Frame", {
-                Size = UDim2.new(1, -10, 0, #options * 28),
-                Position = UDim2.new(0, 5, 0, 38),
+                Size = UDim2.new(1, -12, 0, #options * 28),
+                Position = UDim2.new(0, 6, 0, 38),
                 BackgroundTransparency = 1,
+                ZIndex = 5,
                 Parent = DropFrame
             })
             
-            local OptionList = Create("UIListLayout", {Padding = UDim.new(0, 3), Parent = OptionContainer})
+            local OptionList = Create("UIListLayout", {Padding = UDim.new(0, 2), Parent = OptionContainer})
             
             for _, opt in ipairs(options) do
                 local OptBtn = Create("TextButton", {
-                    Size = UDim2.new(1, 0, 0, 25),
-                    BackgroundColor3 = Config.AccentColor,
+                    Size = UDim2.new(1, 0, 0, 26),
+                    BackgroundColor3 = Color3.fromRGB(50, 50, 50),
                     BackgroundTransparency = 0.5,
                     Text = opt,
                     TextColor3 = Config.TextColor,
-                    TextSize = 13,
+                    TextSize = 12,
                     Font = Enum.Font.Gotham,
+                    ZIndex = 5,
                     Parent = OptionContainer
                 })
                 AddCorner(OptBtn, 4)
+                
+                OptBtn.MouseEnter:Connect(function()
+                    Tween(OptBtn, {BackgroundTransparency = 0.2}, 0.1)
+                end)
+                OptBtn.MouseLeave:Connect(function()
+                    Tween(OptBtn, {BackgroundTransparency = 0.5}, 0.1)
+                end)
                 
                 OptBtn.MouseButton1Click:Connect(function()
                     Selected = opt
                     Label.Text = text .. ": " .. opt
                     Open = false
-                    Tween(DropFrame, {Size = UDim2.new(1, -10, 0, 35)}, 0.2)
-                    Arrow.Text = "▼"
+                    Tween(DropFrame, {Size = UDim2.new(1, 0, 0, 34)}, 0.2)
+                    Tween(Arrow, {Rotation = 0}, 0.2)
                     if callback then callback(opt) end
                 end)
             end
             
             DropFrame.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                if input.UserInputType == Enum.UserInputType.MouseButton1 and input.Position.Y < DropFrame.AbsolutePosition.Y + 34 then
                     Open = not Open
                     if Open then
-                        Tween(DropFrame, {Size = UDim2.new(1, -10, 0, 40 + #options * 28)}, 0.2)
-                        Arrow.Text = "▲"
+                        Tween(DropFrame, {Size = UDim2.new(1, 0, 0, 42 + #options * 28)}, 0.2)
+                        Tween(Arrow, {Rotation = 180}, 0.2)
                     else
-                        Tween(DropFrame, {Size = UDim2.new(1, -10, 0, 35)}, 0.2)
-                        Arrow.Text = "▼"
+                        Tween(DropFrame, {Size = UDim2.new(1, 0, 0, 34)}, 0.2)
+                        Tween(Arrow, {Rotation = 0}, 0.2)
                     end
                 end
             end)
@@ -594,47 +705,58 @@ function LiquidLibrary:CreateWindow(title)
         
         function Tab:CreateLabel(text)
             local Lbl = Create("TextLabel", {
-                Size = UDim2.new(1, -10, 0, 25),
+                Size = UDim2.new(1, 0, 0, 22),
                 BackgroundTransparency = 1,
                 Text = text,
-                TextColor3 = Config.TextColor,
-                TextSize = 14,
+                TextColor3 = Config.DimText,
+                TextSize = 12,
                 Font = Enum.Font.Gotham,
                 TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 4,
                 Parent = TabContent
             })
+            
+            local padding = Create("UIPadding", {
+                PaddingLeft = UDim.new(0, 4),
+                Parent = Lbl
+            })
+            
             return Lbl
         end
         
         function Tab:CreateKeybind(text, default, callback)
             local KeyFrame = Create("Frame", {
-                Size = UDim2.new(1, -10, 0, 35),
-                BackgroundColor3 = Config.GlassColor,
-                BackgroundTransparency = 0.3,
+                Size = UDim2.new(1, 0, 0, 34),
+                BackgroundColor3 = Color3.fromRGB(35, 35, 35),
+                BackgroundTransparency = 0.4,
+                ZIndex = 4,
                 Parent = TabContent
             })
             AddCorner(KeyFrame, 6)
             
             local Label = Create("TextLabel", {
-                Size = UDim2.new(1, -80, 1, 0),
-                Position = UDim2.new(0, 10, 0, 0),
+                Size = UDim2.new(1, -70, 1, 0),
+                Position = UDim2.new(0, 12, 0, 0),
                 BackgroundTransparency = 1,
                 Text = text,
                 TextColor3 = Config.TextColor,
-                TextSize = 14,
+                TextSize = 13,
                 Font = Enum.Font.Gotham,
                 TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 4,
                 Parent = KeyFrame
             })
             
             local KeyBtn = Create("TextButton", {
-                Size = UDim2.new(0, 60, 0, 25),
-                Position = UDim2.new(1, -70, 0.5, -12),
-                BackgroundColor3 = Config.AccentColor,
+                Size = UDim2.new(0, 55, 0, 24),
+                Position = UDim2.new(1, -62, 0.5, -12),
+                BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+                BackgroundTransparency = 0.3,
                 Text = default and default.Name or "None",
                 TextColor3 = Config.TextColor,
-                TextSize = 12,
+                TextSize = 11,
                 Font = Enum.Font.GothamMedium,
+                ZIndex = 5,
                 Parent = KeyFrame
             })
             AddCorner(KeyBtn, 4)
@@ -645,6 +767,7 @@ function LiquidLibrary:CreateWindow(title)
             KeyBtn.MouseButton1Click:Connect(function()
                 Listening = true
                 KeyBtn.Text = "..."
+                Tween(KeyBtn, {BackgroundColor3 = Color3.fromRGB(80, 80, 80)}, 0.1)
             end)
             
             UserInputService.InputBegan:Connect(function(input, processed)
@@ -652,6 +775,7 @@ function LiquidLibrary:CreateWindow(title)
                     CurrentKey = input.KeyCode
                     KeyBtn.Text = input.KeyCode.Name
                     Listening = false
+                    Tween(KeyBtn, {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}, 0.1)
                 elseif not processed and CurrentKey and input.KeyCode == CurrentKey then
                     if callback then callback() end
                 end
@@ -660,59 +784,33 @@ function LiquidLibrary:CreateWindow(title)
             return {Frame = KeyFrame, GetKey = function() return CurrentKey end}
         end
         
-        function Tab:CreateColorPicker(text, default, callback)
-            local ColorFrame = Create("Frame", {
-                Size = UDim2.new(1, -10, 0, 35),
-                BackgroundColor3 = Config.GlassColor,
-                BackgroundTransparency = 0.3,
+        function Tab:CreateSeparator()
+            local Sep = Create("Frame", {
+                Size = UDim2.new(1, 0, 0, 1),
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                BackgroundTransparency = 0.9,
+                ZIndex = 4,
                 Parent = TabContent
             })
-            AddCorner(ColorFrame, 6)
-            
-            local Label = Create("TextLabel", {
-                Size = UDim2.new(1, -50, 1, 0),
-                Position = UDim2.new(0, 10, 0, 0),
-                BackgroundTransparency = 1,
-                Text = text,
-                TextColor3 = Config.TextColor,
-                TextSize = 14,
-                Font = Enum.Font.Gotham,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = ColorFrame
-            })
-            
-            local ColorPreview = Create("Frame", {
-                Size = UDim2.new(0, 30, 0, 25),
-                Position = UDim2.new(1, -40, 0.5, -12),
-                BackgroundColor3 = default or Color3.fromRGB(255, 255, 255),
-                Parent = ColorFrame
-            })
-            AddCorner(ColorPreview, 4)
-            
-            local CurrentColor = default or Color3.new(1, 1, 1)
-            
-            ColorFrame.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    local h, s, v = CurrentColor:ToHSV()
-                    h = (h + 0.1) % 1
-                    CurrentColor = Color3.fromHSV(h, s, v)
-                    ColorPreview.BackgroundColor3 = CurrentColor
-                    if callback then callback(CurrentColor) end
-                end
-            end)
-            
-            return {Frame = ColorFrame, GetColor = function() return CurrentColor end}
+            return Sep
         end
         
         return Tab
     end
     
     function Window:Destroy()
+        Tween(MainFrame, {Size = UDim2.new(0, 0, 0, 0)}, 0.25).Completed:Wait()
         ScreenGui:Destroy()
     end
     
     function Window:SetVisible(visible)
-        MainFrame.Visible = visible
+        if visible then
+            MainFrame.Visible = true
+            Tween(MainFrame, {Size = UDim2.new(0, 520, 0, 380)}, 0.3, Enum.EasingStyle.Back)
+        else
+            Tween(MainFrame, {Size = UDim2.new(0, 0, 0, 0)}, 0.25).Completed:Wait()
+            MainFrame.Visible = false
+        end
         Window.Visible = visible
     end
     
@@ -727,44 +825,56 @@ function LiquidLibrary:Notify(title, message, duration)
         Parent = game:GetService("CoreGui")
     })
     
+    local existingCount = #ScreenGui:GetChildren()
+    
     local NotifFrame = Create("Frame", {
-        Size = UDim2.new(0, 280, 0, 70),
-        Position = UDim2.new(1, 300, 1, -80 - (#ScreenGui:GetChildren() - 1) * 80),
-        BackgroundColor3 = Config.MainColor,
+        Size = UDim2.new(0, 260, 0, 0),
+        Position = UDim2.new(1, 10, 1, -10 - existingCount * 75),
+        AnchorPoint = Vector2.new(1, 1),
+        BackgroundColor3 = Color3.fromRGB(20, 20, 20),
+        BackgroundTransparency = 0.1,
+        ClipsDescendants = true,
         Parent = ScreenGui
     })
     AddCorner(NotifFrame, 8)
-    AddGlass(NotifFrame)
+    
+    local stroke = Create("UIStroke", {
+        Color = Color3.fromRGB(255, 255, 255),
+        Transparency = 0.9,
+        Thickness = 1,
+        Parent = NotifFrame
+    })
     
     local Title = Create("TextLabel", {
-        Size = UDim2.new(1, -20, 0, 25),
-        Position = UDim2.new(0, 10, 0, 5),
+        Size = UDim2.new(1, -16, 0, 22),
+        Position = UDim2.new(0, 10, 0, 8),
         BackgroundTransparency = 1,
         Text = title or "Notification",
-        TextColor3 = Config.AccentColor,
-        TextSize = 16,
+        TextColor3 = Config.TextColor,
+        TextSize = 14,
         Font = Enum.Font.GothamBold,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = NotifFrame
     })
     
     local Message = Create("TextLabel", {
-        Size = UDim2.new(1, -20, 0, 35),
+        Size = UDim2.new(1, -16, 0, 30),
         Position = UDim2.new(0, 10, 0, 30),
         BackgroundTransparency = 1,
         Text = message or "",
-        TextColor3 = Config.TextColor,
-        TextSize = 13,
+        TextColor3 = Config.DimText,
+        TextSize = 12,
         Font = Enum.Font.Gotham,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextWrapped = true,
         Parent = NotifFrame
     })
     
-    Tween(NotifFrame, {Position = UDim2.new(1, -290, 1, -80 - (#ScreenGui:GetChildren() - 1) * 80)}, 0.3)
+    -- Slide in animation
+    Tween(NotifFrame, {Size = UDim2.new(0, 260, 0, 65), Position = UDim2.new(1, -10, 1, -10 - existingCount * 75)}, 0.3, Enum.EasingStyle.Back)
     
     task.delay(duration or 3, function()
-        Tween(NotifFrame, {Position = UDim2.new(1, 300, NotifFrame.Position.Y.Scale, NotifFrame.Position.Y.Offset)}, 0.3).Completed:Wait()
+        Tween(NotifFrame, {Size = UDim2.new(0, 260, 0, 0), BackgroundTransparency = 1}, 0.25).Completed:Wait()
         NotifFrame:Destroy()
     end)
 end
