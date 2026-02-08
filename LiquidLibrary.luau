@@ -453,7 +453,7 @@ function LiquidGlass:CreateWindow(Config)
     MainFrame.BackgroundColor3 = Settings.Colors.Background
     MainFrame.BackgroundTransparency = Settings.Glass.Transparency
     MainFrame.BorderSizePixel = 0
-    MainFrame.ClipsDescendants = false
+    MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
     
     GlobalElements.MainFrame = MainFrame
